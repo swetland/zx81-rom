@@ -1,5 +1,3 @@
-
-
 ; ===========================================================
 ; An Assembly Listing of the Operating System of the ZX81 ROM
 ; ===========================================================
@@ -56,20 +54,22 @@
 ;
 ;
 ;
-;	PIXEL_CLOCK	equ	7372500
+;	PIXEL_CLOCK:	equ	7372500
 ;
 ; on-line assembler complains about the line above
 ;
 ; CHARS_PER_LINE_WINDOW always 32 for 6.5   MHz pixel rate
 ;                       always 40 for 7.375 MHz PAL square pixel rate
 ;
-CHARS_PER_LINE_WINDOW	equ	40	; 32	originally
+;CHARS_PER_LINE_WINDOW:	equ	40	; 32	originally
+CHARS_PER_LINE_WINDOW:	equ	32
 ;
 ; CHARS_PER_LINE always 32 for 6.5 MHz pixel rate
 ;                but 32 or 40 if using PAL square pixel rate
 ;
-CHARS_HORIZONTAL	equ	40	; 32	originally
-CHARS_VERTICAL		equ	24
+;CHARS_HORIZONTAL:	equ	40	; 32	originally
+CHARS_HORIZONTAL:	equ	32
+CHARS_VERTICAL:		equ	24
 ;
 ; 2014-08-01
 ; Largely working but some bugs remain.
@@ -90,10 +90,10 @@ CHARS_VERTICAL		equ	24
 ;
 	org	0
 	
-FALSE		equ	0
+FALSE:		equ	0
 
-ORIGINAL	equ	0
-NOT_BODGED	equ	1
+ORIGINAL:	equ	1
+NOT_BODGED:	equ	1
 
 ; 2018-02-09 CHARS_HORIZONTAL placed in SCROLL routine.
 ;		Thanks to Adam Klotblixt for testing code and spotting this bug.
@@ -117,409 +117,402 @@ NOT_BODGED	equ	1
 ; some from the more elusive Complete ZX81 ROM Disassembly
 ; by the same publishers, Melbourne House.
 
-#if 0
-; zasm does not understand these:
-#define DEFB .BYTE	; TASM cross-assembler definitions
-#define DEFW .WORD
-#define EQU	.EQU
-#endif
-
 ; define stuff sensibly:
 ;
 ; I/O locations:
 ;
-IO_PORT_TAPE		equ	$FF	; write
-IO_PORT_SCREEN		equ	$FF	; write
+IO_PORT_TAPE:		equ	$FF	; write
+IO_PORT_SCREEN:		equ	$FF	; write
 
-IO_PORT_KEYBOARD_RD	equ	$FE	; A0 low
-IO_PORT_NMI_GEN_ON	equ	$FE	; A0 low
-IO_PORT_NMI_GEN_OFF	equ	$FD	; A1 low
-IO_PORT_PRINTER		equ	$FB	; A2 low
+IO_PORT_KEYBOARD_RD:	equ	$FE	; A0 low
+IO_PORT_NMI_GEN_ON:	equ	$FE	; A0 low
+IO_PORT_NMI_GEN_OFF:	equ	$FD	; A1 low
+IO_PORT_PRINTER:		equ	$FB	; A2 low
 
 ;
 ; System variables:
 ;
-RAMBASE		equ	$4000
-ERR_NR		equ	$4000		; The report code. Incremented before printing.
-FLAGS		equ	$4001		; Bit 0: Suppression of leading space.
+RAMBASE:		equ	$4000
+ERR_NR:		equ	$4000		; The report code. Incremented before printing.
+FLAGS:		equ	$4001		; Bit 0: Suppression of leading space.
 					; Bit 1: Control Flag for the printer.
 					; Bit 2: Selects K or F mode; or, F or G
 					; Bit 6: FP no. or string parameters.
 					; Bit 7: Reset during syntax checking."
-ERR_SP		equ	$4002		; Pointer to the GOSUB stack.
-RAMTOP		equ	$4004		; The top of available RAM, or as specified.
-MODE		equ	$4006		; Holds the code for K or F
-PPC		equ	$4007		; Line number of the current statement.
-PPC_hi		equ	PPC+1
-VERSN		equ	$4009		; Marks the start of the RAM that is saved.
-E_PPC		equ	$400A		; The BASIC line with the cursor
-D_FILE		equ	$400C		; Pointer to Display file
-DF_CC		equ	$400E		; Address for PRINT AT position
-VARS		equ	$4010		; Pointer to variable area
-DEST		equ	$4012		; Address of current variable in program area
-E_LINE		equ	$4014		; Pointer to workspace
-E_LINE_hi	equ	E_LINE+1
-CH_ADD		equ	$4016		; Pointer for scanning a line, in program or workspace
-X_PTR		equ	$4018		; Pointer to syntax error.
-X_PTR_lo	equ	X_PTR
-X_PTR_hi	equ	X_PTR+1
-STKBOT		equ	$401A		; Pointer to calculator stack bottom.
-STKEND		equ	$401C		; Pointer to calculator stack end.
-BERG		equ	$401E		; Used for many different counting purposes
-MEM		equ	$401F		; Pointer to base of table of fp. nos, either in calc. stack or variable area.
+ERR_SP:		equ	$4002		; Pointer to the GOSUB stack.
+RAMTOP:		equ	$4004		; The top of available RAM, or as specified.
+MODE:		equ	$4006		; Holds the code for K or F
+PPC:		equ	$4007		; Line number of the current statement.
+PPC_hi:		equ	PPC+1
+VERSN:		equ	$4009		; Marks the start of the RAM that is saved.
+E_PPC:		equ	$400A		; The BASIC line with the cursor
+D_FILE:		equ	$400C		; Pointer to Display file
+DF_CC:		equ	$400E		; Address for PRINT AT position
+VARS:		equ	$4010		; Pointer to variable area
+DEST:		equ	$4012		; Address of current variable in program area
+E_LINE:		equ	$4014		; Pointer to workspace
+E_LINE_hi:	equ	E_LINE+1
+CH_ADD:		equ	$4016		; Pointer for scanning a line, in program or workspace
+X_PTR:		equ	$4018		; Pointer to syntax error.
+X_PTR_lo:	equ	X_PTR
+X_PTR_hi:	equ	X_PTR+1
+STKBOT:		equ	$401A		; Pointer to calculator stack bottom.
+STKEND:		equ	$401C		; Pointer to calculator stack end.
+BERG:		equ	$401E		; Used for many different counting purposes
+MEM:		equ	$401F		; Pointer to base of table of fp. nos, either in calc. stack or variable area.
 ;					; Unused by ZX BASIC. Or FLAG Y for G007
-DF_SZ		equ	$4022		; Number of lines in the lower screen
-S_TOP		equ	$4023		; Current line number of automatic listing
-LAST_K		equ	$4025		; Last Key pressed
-DEBOUNCE_VAR	equ	$4027		; The de-bounce status
-MARGIN		equ	$4028		; Adjusts for differing TV standards
-NXTLIN		equ	$4029		; Next BASIC line to be interpreted
-OLDPPC		equ	$402B		; Last line number, in case needed.
-FLAGX		equ	$402D		; Bit 0: Reset indicates an arrayed variable
+DF_SZ:		equ	$4022		; Number of lines in the lower screen
+S_TOP:		equ	$4023		; Current line number of automatic listing
+LAST_K:		equ	$4025		; Last Key pressed
+DEBOUNCE_VAR:	equ	$4027		; The de-bounce status
+MARGIN:		equ	$4028		; Adjusts for differing TV standards
+NXTLIN:		equ	$4029		; Next BASIC line to be interpreted
+OLDPPC:		equ	$402B		; Last line number, in case needed.
+FLAGX:		equ	$402D		; Bit 0: Reset indicates an arrayed variable
 					; Bit 1: Reset indicates a given variable exists
 					; Bit 5: Set during INPUT mode
 					; Bit 7: Set when INPUT is to be numeric
-STRLEN		equ	$402E		; Length of a string, or a BASIC line
-STRLEN_lo	equ	STRLEN		; 
-T_ADDR		equ	$4030		; Pointer to parameter table. & distinguishes between PLOT & UNPLOT
-SEED		equ	$4032		; For RANDOM function
-FRAMES		equ	$4034		; Frame counter
-FRAMES_hi	equ	FRAMES+1	; 
-COORDS		equ	$4036		; X & Y for PLOT
-COORDS_x	equ	COORDS		; 
-PR_CC		equ	$4038		; Print buffer counter
-S_POSN		equ	$4039		; Line & Column for PRINT AT
-S_POSN_x	equ	$4039		; 
-S_POSN_y	equ	$403A		; 
-CDFLAG		equ	$403B		; Bit 6 = the true fast/slow flag
+STRLEN:		equ	$402E		; Length of a string, or a BASIC line
+STRLEN_lo:	equ	STRLEN		; 
+T_ADDR:		equ	$4030		; Pointer to parameter table. & distinguishes between PLOT & UNPLOT
+SEED:		equ	$4032		; For RANDOM function
+FRAMES:		equ	$4034		; Frame counter
+FRAMES_hi:	equ	FRAMES+1	; 
+COORDS:		equ	$4036		; X & Y for PLOT
+COORDS_x:	equ	COORDS		; 
+PR_CC:		equ	$4038		; Print buffer counter
+S_POSN:		equ	$4039		; Line & Column for PRINT AT
+S_POSN_x:	equ	$4039		; 
+S_POSN_y:	equ	$403A		; 
+CDFLAG:		equ	$403B		; Bit 6 = the true fast/slow flag
 					; Bit 7 = copy of the fast/slow flag. RESET when FAST needed
-PRBUFF		equ	$403C		; Printer buffer
-PRBUFF_END	equ	$405C		; 
-MEM_0_1st	equ	$405D		; room for 5 floating point numbers (meme_0 to mem_ 5???)
+PRBUFF:		equ	$403C		; Printer buffer
+PRBUFF_END:	equ	$405C		; 
+MEM_0_1st:	equ	$405D		; room for 5 floating point numbers (meme_0 to mem_ 5???)
 ;			$407B		; unused. Or RESTART to G007
 ;			$407D		; The BASIC program starts here
-;		equ	$40
-;		equ	$40
-;		equ	$40
+;:		equ	$40
+;:		equ	$40
+;:		equ	$40
 ; First byte after system variables:
-USER_RAM	equ	$407D
-MAX_RAM		equ	$7FFF
+USER_RAM:	equ	$407D
+MAX_RAM:		equ	$7FFF
 
 ;===============================
 ; ZX81 constants:
 ;===============================
 ; ZX characters (not the same as ASCII)
 ;-------------------------------
-ZX_SPACE	equ	$00
-;	ZX_graphic		equ	$01	
-;	ZX_graphic		equ	$02	
-;	ZX_graphic		equ	$03	
-;	ZX_graphic		equ	$04	
-;	ZX_graphic		equ	$05	
-;	ZX_graphic		equ	$06	
-;	ZX_graphic		equ	$07	
-;	ZX_graphic		equ	$08	
-;	ZX_graphic		equ	$09	
-;	ZX_graphic		equ	$0A	
-ZX_QUOTE		equ	$0B
-ZX_POUND		equ	$0C
-ZX_DOLLAR		equ	$0D
-ZX_COLON		equ	$0E
-ZX_QUERY		equ	$0F
-ZX_BRACKET_LEFT		equ	$10
-ZX_BRACKET_RIGHT	equ	$11
-ZX_GREATER_THAN		equ	$12
-ZX_LESS_THAN		equ	$13
-ZX_EQUAL		equ	$14
-ZX_PLUS			equ	$15
-ZX_MINUS		equ	$16
-ZX_STAR			equ	$17
-ZX_SLASH		equ	$18
-ZX_SEMICOLON		equ	$19
-ZX_COMMA		equ	$1A
-ZX_PERIOD		equ	$1B
-ZX_0		equ	$1C
-ZX_1		equ	$1D
-ZX_2		equ	$1E
-ZX_3		equ	$1F
-ZX_4		equ	$20
-ZX_5		equ	$21
-ZX_6		equ	$22
-ZX_7		equ	$23
-ZX_8		equ	$24
-ZX_9		equ	$25
-ZX_A		equ	$26
-ZX_B		equ	$27
-ZX_C		equ	$28
-ZX_D		equ	$29
-ZX_E		equ	$2A
-ZX_F		equ	$2B
-ZX_G		equ	$2C
-ZX_H		equ	$2D
-ZX_I		equ	$2E
-ZX_J		equ	$2F
-ZX_K		equ	$30
-ZX_L		equ	$31
-ZX_M		equ	$32
-ZX_N		equ	$33
-ZX_O		equ	$34
-ZX_P		equ	$35
-ZX_Q		equ	$36
-ZX_R		equ	$37
-ZX_S		equ	$38
-ZX_T		equ	$39
-ZX_U		equ	$3A
-ZX_V		equ	$3B
-ZX_W		equ	$3C
-ZX_X		equ	$3D
-ZX_Y		equ	$3E
-ZX_Z		equ	$3F
-ZX_RND			equ	$40
-ZX_INKEY_STR		equ	$41
-ZX_PI			equ	$42
+ZX_SPACE:	equ	$00
+;	ZX_graphic:		equ	$01
+;	ZX_graphic:		equ	$02
+;	ZX_graphic:		equ	$03
+;	ZX_graphic:		equ	$04
+;	ZX_graphic:		equ	$05
+;	ZX_graphic:		equ	$06
+;	ZX_graphic:		equ	$07
+;	ZX_graphic:		equ	$08
+;	ZX_graphic:		equ	$09
+;	ZX_graphic:		equ	$0A
+ZX_QUOTE:		equ	$0B
+ZX_POUND:		equ	$0C
+ZX_DOLLAR:		equ	$0D
+ZX_COLON:		equ	$0E
+ZX_QUERY:		equ	$0F
+ZX_BRACKET_LEFT:		equ	$10
+ZX_BRACKET_RIGHT:	equ	$11
+ZX_GREATER_THAN:		equ	$12
+ZX_LESS_THAN:		equ	$13
+ZX_EQUAL:		equ	$14
+ZX_PLUS:			equ	$15
+ZX_MINUS:		equ	$16
+ZX_STAR:			equ	$17
+ZX_SLASH:		equ	$18
+ZX_SEMICOLON:		equ	$19
+ZX_COMMA:		equ	$1A
+ZX_PERIOD:		equ	$1B
+ZX_0:		equ	$1C
+ZX_1:		equ	$1D
+ZX_2:		equ	$1E
+ZX_3:		equ	$1F
+ZX_4:		equ	$20
+ZX_5:		equ	$21
+ZX_6:		equ	$22
+ZX_7:		equ	$23
+ZX_8:		equ	$24
+ZX_9:		equ	$25
+ZX_A:		equ	$26
+ZX_B:		equ	$27
+ZX_C:		equ	$28
+ZX_D:		equ	$29
+ZX_E:		equ	$2A
+ZX_F:		equ	$2B
+ZX_G:		equ	$2C
+ZX_H:		equ	$2D
+ZX_I:		equ	$2E
+ZX_J:		equ	$2F
+ZX_K:		equ	$30
+ZX_L:		equ	$31
+ZX_M:		equ	$32
+ZX_N:		equ	$33
+ZX_O:		equ	$34
+ZX_P:		equ	$35
+ZX_Q:		equ	$36
+ZX_R:		equ	$37
+ZX_S:		equ	$38
+ZX_T:		equ	$39
+ZX_U:		equ	$3A
+ZX_V:		equ	$3B
+ZX_W:		equ	$3C
+ZX_X:		equ	$3D
+ZX_Y:		equ	$3E
+ZX_Z:		equ	$3F
+ZX_RND:			equ	$40
+ZX_INKEY_STR:		equ	$41
+ZX_PI:			equ	$42
 ;
 ; $43 to $6F not used
 ;
-ZX_cursor_up		equ	$70
-ZX_cursor_down		equ	$71
-ZX_cursor_left		equ	$72
-ZX_cursor_right		equ	$73
+ZX_cursor_up:		equ	$70
+ZX_cursor_down:		equ	$71
+ZX_cursor_left:		equ	$72
+ZX_cursor_right:		equ	$73
 
-ZX_GRAPHICS		equ	$74
-ZX_EDIT			equ	$75
-ZX_NEWLINE		equ	$76
-ZX_RUBOUT		equ	$77
-ZX_KL			equ	$78
-ZX_FUNCTION		equ	$79
+ZX_GRAPHICS:		equ	$74
+ZX_EDIT:			equ	$75
+ZX_NEWLINE:		equ	$76
+ZX_RUBOUT:		equ	$77
+ZX_KL:			equ	$78
+ZX_FUNCTION:		equ	$79
 ;
 ; $7A to $7F not used
 ;
-ZX_CURSOR		equ	$7F
+ZX_CURSOR:		equ	$7F
 ;
 ; $80 to $BF are inverses of $00 to $3F
 ;
-;	ZX_graphic		equ	$80	 ; inverse space
-;	ZX_graphic		equ	$81	
-;	ZX_graphic		equ	$82	
-;	ZX_graphic		equ	$83	
-;	ZX_graphic		equ	$84	
-;	ZX_graphic		equ	$85	
-;	ZX_graphic		equ	$86	
-;	ZX_graphic		equ	$87	
-;	ZX_graphic		equ	$88	
-;	ZX_graphic		equ	$89	
-;	ZX_graphic		equ	$8A	
-ZX_INV_QUOTE		equ	$8B
-ZX_INV_POUND		equ	$8C
-ZX_INV_DOLLAR		equ	$8D
-ZX_INV_COLON		equ	$8E
-ZX_INV_QUERY		equ	$8F
-ZX_INV_BRACKET_RIGHT	equ	$90
-ZX_INV_BRACKET_LEFT	equ	$91
-ZX_INV_GT		equ	$92
+;	ZX_graphic:		equ	$80	 ; inverse space
+;	ZX_graphic:		equ	$81
+;	ZX_graphic:		equ	$82
+;	ZX_graphic:		equ	$83
+;	ZX_graphic:		equ	$84
+;	ZX_graphic:		equ	$85
+;	ZX_graphic:		equ	$86
+;	ZX_graphic:		equ	$87
+;	ZX_graphic:		equ	$88
+;	ZX_graphic:		equ	$89
+;	ZX_graphic:		equ	$8A
+ZX_INV_QUOTE:		equ	$8B
+ZX_INV_POUND:		equ	$8C
+ZX_INV_DOLLAR:		equ	$8D
+ZX_INV_COLON:		equ	$8E
+ZX_INV_QUERY:		equ	$8F
+ZX_INV_BRACKET_RIGHT:	equ	$90
+ZX_INV_BRACKET_LEFT:	equ	$91
+ZX_INV_GT:		equ	$92
 
-ZX_INV_PLUS		equ	$95
-ZX_INV_MINUS		equ	$96
+ZX_INV_PLUS:		equ	$95
+ZX_INV_MINUS:		equ	$96
 
-ZX_INV_K		equ	$B0
-ZX_INV_S		equ	$B8
+ZX_INV_K:		equ	$B0
+ZX_INV_S:		equ	$B8
 
-ZX_DOUBLE_QUOTE		equ	$C0
-ZX_AT			equ	$C1
-ZX_TAB			equ	$C2
-; not used		equ	$C3
-ZX_CODE			equ	$C4
-ZX_VAL			equ	$C5
-ZX_LEN			equ	$C6
-ZX_SIN			equ	$C7
-ZX_COS			equ	$C8
-ZX_TAN			equ	$C9
-ZX_ASN			equ	$CA
-ZX_ACS			equ	$CB
-ZX_ATN			equ	$CC
-ZX_LN			equ	$CD
-ZX_EXP			equ	$CE
-ZX_INT			equ	$CF
+ZX_DOUBLE_QUOTE:		equ	$C0
+ZX_AT:			equ	$C1
+ZX_TAB:			equ	$C2
+; not used:		equ	$C3
+ZX_CODE:			equ	$C4
+ZX_VAL:			equ	$C5
+ZX_LEN:			equ	$C6
+ZX_SIN:			equ	$C7
+ZX_COS:			equ	$C8
+ZX_TAN:			equ	$C9
+ZX_ASN:			equ	$CA
+ZX_ACS:			equ	$CB
+ZX_ATN:			equ	$CC
+ZX_LN:			equ	$CD
+ZX_EXP:			equ	$CE
+ZX_INT:			equ	$CF
 
-ZX_SQR			equ	$D0
-ZX_SGN			equ	$D1
-ZX_ABS			equ	$D2
-ZX_PEEK			equ	$D3
-ZX_USR			equ	$D4
-ZX_STR_STR		equ	$D5		; STR$
-ZX_CHR_STR		equ	$D6		; CHR$
-ZX_NOT			equ	$D7
-ZX_POWER		equ	$D8
-ZX_OR			equ	$D9
-ZX_AND			equ	$DA
-ZX_LESS_OR_EQUAL	equ	$DB
-ZX_GREATER_OR_EQUAL	equ	$DC
-ZX_NOT_EQUAL		equ	$DD
-ZX_THEN			equ	$DE
-ZX_TO			equ	$DF
+ZX_SQR:			equ	$D0
+ZX_SGN:			equ	$D1
+ZX_ABS:			equ	$D2
+ZX_PEEK:			equ	$D3
+ZX_USR:			equ	$D4
+ZX_STR_STR:		equ	$D5		; STR$
+ZX_CHR_STR:		equ	$D6		; CHR$
+ZX_NOT:			equ	$D7
+ZX_POWER:		equ	$D8
+ZX_OR:			equ	$D9
+ZX_AND:			equ	$DA
+ZX_LESS_OR_EQUAL:	equ	$DB
+ZX_GREATER_OR_EQUAL:	equ	$DC
+ZX_NOT_EQUAL:		equ	$DD
+ZX_THEN:			equ	$DE
+ZX_TO:			equ	$DF
 
-ZX_STEP			equ	$E0
-ZX_LPRINT		equ	$E1
-ZX_LLIST		equ	$E2
-ZX_STOP			equ	$E3
-ZX_SLOW			equ	$E4
-ZX_FAST			equ	$E5
-ZX_NEW			equ	$E6
-ZX_SCROLL		equ	$E7
-ZX_CONT			equ	$E8
-ZX_DIM			equ	$E9
-ZX_REM			equ	$EA
-ZX_FOR			equ	$EB
-ZX_GOTO			equ	$EC
-ZX_GOSUB		equ	$ED
-ZX_INPUT		equ	$EE
-ZX_LOAD			equ	$EF
+ZX_STEP:			equ	$E0
+ZX_LPRINT:		equ	$E1
+ZX_LLIST:		equ	$E2
+ZX_STOP:			equ	$E3
+ZX_SLOW:			equ	$E4
+ZX_FAST:			equ	$E5
+ZX_NEW:			equ	$E6
+ZX_SCROLL:		equ	$E7
+ZX_CONT:			equ	$E8
+ZX_DIM:			equ	$E9
+ZX_REM:			equ	$EA
+ZX_FOR:			equ	$EB
+ZX_GOTO:			equ	$EC
+ZX_GOSUB:		equ	$ED
+ZX_INPUT:		equ	$EE
+ZX_LOAD:			equ	$EF
 
-ZX_LIST			equ	$F0
-ZX_LET			equ	$F1
-ZX_PAUSE		equ	$F2
-ZX_NEXT			equ	$F3
-ZX_POKE			equ	$F4
-ZX_PRINT		equ	$F5
-ZX_PLOT			equ	$F6
-ZX_RUN			equ	$F7
-ZX_SAVE			equ	$F8
-ZX_RAND			equ	$F9
-ZX_IF			equ	$FA
-ZX_CLS			equ	$FB
-ZX_UNPLOT		equ	$FC
-ZX_CLEAR		equ	$FD
-ZX_RETURN		equ	$FE
-ZX_COPY			equ	$FF
+ZX_LIST:			equ	$F0
+ZX_LET:			equ	$F1
+ZX_PAUSE:		equ	$F2
+ZX_NEXT:			equ	$F3
+ZX_POKE:			equ	$F4
+ZX_PRINT:		equ	$F5
+ZX_PLOT:			equ	$F6
+ZX_RUN:			equ	$F7
+ZX_SAVE:			equ	$F8
+ZX_RAND:			equ	$F9
+ZX_IF:			equ	$FA
+ZX_CLS:			equ	$FB
+ZX_UNPLOT:		equ	$FC
+ZX_CLEAR:		equ	$FD
+ZX_RETURN:		equ	$FE
+ZX_COPY:			equ	$FF
 
 
 ;
-_CLASS_00	equ	0
-_CLASS_01	equ	1
-_CLASS_02	equ	2
-_CLASS_03	equ	3
-_CLASS_04	equ	4
-_CLASS_05	equ	5
-_CLASS_06	equ	6
+_CLASS_00:	equ	0
+_CLASS_01:	equ	1
+_CLASS_02:	equ	2
+_CLASS_03:	equ	3
+_CLASS_04:	equ	4
+_CLASS_05:	equ	5
+_CLASS_06:	equ	6
 
 
 
 ; These values taken from BASIC manual
 ; 
 ;
-ERROR_CODE_SUCCESS			equ	0
-ERROR_CODE_CONTROL_VARIABLE		equ	1
-ERROR_CODE_UNDEFINED_VARIABLE		equ	2
-ERROR_CODE_SUBSCRIPT_OUT_OF_RANGE	equ	3
-ERROR_CODE_NOT_ENOUGH_MEMORY		equ	4
-ERROR_CODE_NO_ROOM_ON_SCREEN		equ	5
-ERROR_CODE_ARITHMETIC_OVERFLOW		equ	6
-ERROR_CODE_RETURN_WITHOUT_GOSUB		equ	7
-ERROR_CODE_INPUT_AS_A_COMMAND		equ	8
-ERROR_CODE_STOP				equ	9
-ERROR_CODE_INVALID_ARGUMENT		equ	10
+ERROR_CODE_SUCCESS:			equ	0
+ERROR_CODE_CONTROL_VARIABLE:		equ	1
+ERROR_CODE_UNDEFINED_VARIABLE:		equ	2
+ERROR_CODE_SUBSCRIPT_OUT_OF_RANGE:	equ	3
+ERROR_CODE_NOT_ENOUGH_MEMORY:		equ	4
+ERROR_CODE_NO_ROOM_ON_SCREEN:		equ	5
+ERROR_CODE_ARITHMETIC_OVERFLOW:		equ	6
+ERROR_CODE_RETURN_WITHOUT_GOSUB:		equ	7
+ERROR_CODE_INPUT_AS_A_COMMAND:		equ	8
+ERROR_CODE_STOP:				equ	9
+ERROR_CODE_INVALID_ARGUMENT:		equ	10
 
-ERROR_CODE_INTEGER_OUT_OF_RANGE		equ	11
-ERROR_CODE_VAL_STRING_INVALID		equ	12
-ERROR_CODE_BREAK			equ	13
+ERROR_CODE_INTEGER_OUT_OF_RANGE:		equ	11
+ERROR_CODE_VAL_STRING_INVALID:		equ	12
+ERROR_CODE_BREAK:			equ	13
 
-ERROR_CODE_EMPTY_PROGRAM_NAME		equ	15
+ERROR_CODE_EMPTY_PROGRAM_NAME:		equ	15
 
 ;
 ; codes for Forth-like calculator
 ;
-__jump_true		equ	$00
-__exchange		equ	$01
-__delete		equ	$02
-__subtract		equ	$03
-__multiply		equ	$04
-__division		equ	$05
-__to_power		equ	$06
-__or			equ	$07
-__boolean_num_and_num	equ	$08
-__num_l_eql		equ	$09
-__num_gr_eql		equ	$0A
-__nums_neql		equ	$0B
-__num_grtr		equ	$0C
-__num_less		equ	$0D
-__nums_eql		equ	$0E
-__addition		equ	$0F
-__strs_and_num		equ	$10
-__str_l_eql		equ	$11
-__str_gr_eql		equ	$12
-__strs_neql		equ	$13
-__str_grtr		equ	$14
-__str_less		equ	$15
-__strs_eql		equ	$16
-__strs_add		equ	$17
-__negate		equ	$18
-__code			equ	$19
-__val			equ	$1A 
-__len			equ	$1B 
-__sin			equ	$1C
-__cos			equ	$1D
-__tan			equ	$1E
-__asn			equ	$1F
-__acs			equ	$20
-__atn			equ	$21
-__ln			equ	$22
-__exp			equ	$23
-__int			equ	$24
-__sqr			equ	$25
-__sgn			equ	$26
-__abs			equ	$27
-__peek			equ	$28
-__usr_num		equ	$29
-__str_dollar		equ	$2A
-__chr_dollar		equ	$2B
-__not			equ	$2C
-__duplicate		equ	$2D
-__n_mod_m		equ	$2E
-__jump			equ	$2F
-__stk_data		equ	$30
-__dec_jr_nz		equ	$31
-__less_0		equ	$32
-__greater_0		equ	$33
-__end_calc		equ	$34
-__get_argt		equ	$35
-__truncate		equ	$36
-__fp_calc_2		equ	$37
-__e_to_fp		equ	$38
+__jump_true:		equ	$00
+__exchange:		equ	$01
+__delete:		equ	$02
+__subtract:		equ	$03
+__multiply:		equ	$04
+__division:		equ	$05
+__to_power:		equ	$06
+__or:			equ	$07
+__boolean_num_and_num:	equ	$08
+__num_l_eql:		equ	$09
+__num_gr_eql:		equ	$0A
+__nums_neql:		equ	$0B
+__num_grtr:		equ	$0C
+__num_less:		equ	$0D
+__nums_eql:		equ	$0E
+__addition:		equ	$0F
+__strs_and_num:		equ	$10
+__str_l_eql:		equ	$11
+__str_gr_eql:		equ	$12
+__strs_neql:		equ	$13
+__str_grtr:		equ	$14
+__str_less:		equ	$15
+__strs_eql:		equ	$16
+__strs_add:		equ	$17
+__negate:		equ	$18
+__code:			equ	$19
+__val:			equ	$1A 
+__len:			equ	$1B 
+__sin:			equ	$1C
+__cos:			equ	$1D
+__tan:			equ	$1E
+__asn:			equ	$1F
+__acs:			equ	$20
+__atn:			equ	$21
+__ln:			equ	$22
+__exp:			equ	$23
+__int:			equ	$24
+__sqr:			equ	$25
+__sgn:			equ	$26
+__abs:			equ	$27
+__peek:			equ	$28
+__usr_num:		equ	$29
+__str_dollar:		equ	$2A
+__chr_dollar:		equ	$2B
+__not:			equ	$2C
+__duplicate:		equ	$2D
+__n_mod_m:		equ	$2E
+__jump:			equ	$2F
+__stk_data:		equ	$30
+__dec_jr_nz:		equ	$31
+__less_0:		equ	$32
+__greater_0:		equ	$33
+__end_calc:		equ	$34
+__get_argt:		equ	$35
+__truncate:		equ	$36
+__fp_calc_2:		equ	$37
+__e_to_fp:		equ	$38
 
 ;
-; __series_xx			equ	$39 : $80__$9F.
+; __series_xx:			equ	$39 : $80__$9F.
 ; tells the stack machine to push 
 ; 0 to 31 floating-point values on the stack.
 ;
-__series_06		equ	$86
-__series_08		equ	$88
-__series_0C		equ	$8C
-;	__stk_const_xx			equ	$3A : $A0__$BF.
-;	__st_mem_xx			equ	$3B : $C0__$DF.
-;	__get_mem_xx			equ	$3C : $E0__$FF.
+__series_06:		equ	$86
+__series_08:		equ	$88
+__series_0C:		equ	$8C
+;	__stk_const_xx:			equ	$3A : $A0__$BF.
+;	__st_mem_xx:			equ	$3B : $C0__$DF.
+;	__get_mem_xx:			equ	$3C : $E0__$FF.
 
-__st_mem_0			equ	$C0
-__st_mem_1			equ	$C1
-__st_mem_2			equ	$C2
-__st_mem_3			equ	$C3
-__st_mem_4			equ	$C4
-__st_mem_5			equ	$C5
-__st_mem_6			equ	$C6
-__st_mem_7			equ	$C7
-
-
-__get_mem_0			equ	$E0
-__get_mem_1			equ	$E1
-__get_mem_2			equ	$E2
-__get_mem_3			equ	$E3
-__get_mem_4			equ	$E4
+__st_mem_0:			equ	$C0
+__st_mem_1:			equ	$C1
+__st_mem_2:			equ	$C2
+__st_mem_3:			equ	$C3
+__st_mem_4:			equ	$C4
+__st_mem_5:			equ	$C5
+__st_mem_6:			equ	$C6
+__st_mem_7:			equ	$C7
 
 
-__stk_zero			equ	$A0
-__stk_one			equ	$A1
-__stk_half			equ	$A2
-__stk_half_pi			equ	$A3
-__stk_ten			equ	$A4
+__get_mem_0:			equ	$E0
+__get_mem_1:			equ	$E1
+__get_mem_2:			equ	$E2
+__get_mem_3:			equ	$E3
+__get_mem_4:			equ	$E4
+
+
+__stk_zero:			equ	$A0
+__stk_one:			equ	$A1
+__stk_half:			equ	$A2
+__stk_half_pi:			equ	$A3
+__stk_ten:			equ	$A4
 
 ;*****************************************
 ;** Part 1. RESTART ROUTINES AND TABLES **
@@ -575,11 +568,11 @@ PRINT_A:
 	JP	PRINT_SP	; jump forward to PRINT_SP.
 
 ; ___
-#if ORIGINAL
+if ORIGINAL
 	DEFB	$FF		; unused location.
-#else
+else
 	DEFB	$01		;+ unused location. Version. PRINT PEEK 23
-#endif
+endif
 
 
 ; THE 'COLLECT A CHARACTER' RESTART
@@ -626,12 +619,12 @@ NEXT_CHAR:
 
 mark_0028:
 FP_CALC:
-#if ORIGINAL
+if ORIGINAL
 	JP	CALCULATE	; jump immediately to the CALCULATE routine.
-#else
+else
 
 	JP	CALCULATE	;+ jump to the NEW calculate routine address.
-#endif
+endif
 
 mark_002B:
 end_calc:
@@ -662,13 +655,13 @@ BC_SPACES:
 
 
 
-_START		equ	$00
-_ERROR_1	equ	$08
-_PRINT_A	equ	$10
-_GET_CHAR	equ	$18
-_NEXT_CHAR	equ	$20
-_FP_CALC	equ	$28
-_BC_SPACES	equ	$30
+_START:		equ	$00
+_ERROR_1:	equ	$08
+_PRINT_A:	equ	$10
+_GET_CHAR:	equ	$18
+_NEXT_CHAR:	equ	$20
+_FP_CALC:	equ	$28
+_BC_SPACES:	equ	$30
 
 ; THE 'INTERRUPT' RESTART
 
@@ -1366,7 +1359,7 @@ LOOP_B:
 	LD	A,E		; transfer column value
 	CP	$FE		;
 	SBC	A,A		; A = A-A-C = 0-Carry
-#if 1
+if 1
 ; I think this truncating DEBOUNCE_VAR 
 ; which would explain why the VSYNC time didn't match
 ; my calculations that assumed debouncing for 255 loops.
@@ -1375,7 +1368,7 @@ LOOP_B:
 	LD	B,$1F		; binary 000 11111
 	OR	(HL)		;
 	AND	B		; truncate column, 0 to 31
-#endif
+endif
 	RRA			;
 	LD	(HL),A		;
 
@@ -1641,7 +1634,7 @@ SAVE:
 ;
 ; The next 6 bytes differ
 ;
-#if NOT_BODGED
+if NOT_BODGED
 ; what ZASM assembled:
 ; 02FC: 11CB12
 	LD	DE,$12CB	; five seconds timing value (4811 decimal)
@@ -1650,7 +1643,7 @@ mark_02FF:
 HEADER:
 	CALL	BREAK_1
 
-#else
+else
 ; what the SG ROM disassembled to:
 ;	02FC   ED;FD
 			LDIR			; Patch tape SAVE
@@ -1658,7 +1651,7 @@ HEADER:
 			JP	SLOW_FAST	; to $0207
 ;	0301   0F
 			RRCA
-#endif
+endif
 
 
 mark_0302:
@@ -1763,7 +1756,7 @@ mark_0347:
 
 
 
-#if NOT_BODGED
+if NOT_BODGED
 
 LNEXT_PROG:
 	CALL	IN_BYTE
@@ -1781,7 +1774,7 @@ mark_034E:
 NEXT_BIT:
 	LD	B,$00		; set counter to 256
 
-#else
+else
 ; what the SG ROM has:
 ;0347   EB
 			EX DE,HL            ; NEXT-PROG
@@ -1791,7 +1784,7 @@ NEXT_BIT:
 			JP SLOW_FAST
 ;034D   01;06;00
 			LD BC,6          
-#endif
+endif
 
 
 
@@ -2215,7 +2208,7 @@ DISPLAY_6:
 
 
 
-#if NOT_BODGED
+if NOT_BODGED
 	BIT	7,(HL)		;
 
 	CALL	Z,DISPLAY_1
@@ -2225,7 +2218,7 @@ SLOW_DISP:
 	BIT	0,(HL)		;
 	JR	Z,SLOW_DISP
 
-#else
+else
 ;	04CA   D3;00
 			OUT ($00),A         ; PORT 0
 ;	04CC   CB;46
@@ -2239,7 +2232,7 @@ L04CC:
 			NOP
 
 
-#endif
+endif
 
 
 
@@ -2727,11 +2720,11 @@ STOP_LINE:
 	BIT	7,(IY+PR_CC-RAMBASE)
 	CALL	Z,COPY_BUFF
 ;
-#if 0
+if 0
 	LD	BC,$0121	;
-#else
+else
 	LD	BC,256*1 + CHARS_HORIZONTAL + 1
-#endif
+endif
 ;
 ;
 	CALL	LOC_ADDR
@@ -3427,8 +3420,8 @@ SET_FIELD:
 ;
 ; I'm guessing this locates the address of a character at X,Y 
 ; on the screen, with 0,0 being on the bottom left?
-; S_POSN_x    equ $4039
-; S_POSN_y    equ $403A
+; S_POSN_x:    equ $4039
+; S_POSN_y:    equ $403A
 ; so when BC is stored there, B is Y and C is X
 ;
 mark_0918:
@@ -6634,10 +6627,10 @@ L_IN_W_S:
 mark_13AE:
 L_ENTER:
 	EX	DE,HL		;
-#if ORIGINAL
-#else
+if ORIGINAL
+else
 COND_MV
-#endif
+endif
 	LD	A,B		;
 	OR	C		;
 	RET	Z		;
@@ -7025,15 +7018,15 @@ NXT_DGT_1:
 	RST	_FP_CALC	;;
 	DEFB	__get_mem_0	;;
 	DEFB	__stk_ten	;;
-#if ORIGINAL
+if ORIGINAL
 	DEFB	__division	;
 	DEFB	$C0		;;st-mem-0
 	DEFB	__multiply	;;
-#else
+else
 	DEFB	$04		;;+multiply
 	DEFB	$C0		;;st-mem-0
 	DEFB	$05		;;+division
-#endif
+endif
 	DEFB	__addition	;;
 	DEFB	__end_calc	;;
 
@@ -7757,17 +7750,17 @@ PF_ZEROS:
 	RST	_PRINT_A
 
 
-#if ORIGINAL
+if ORIGINAL
 	LD	A,ZX_0		; prepare a '0'
-PFZROLP
+PFZROLP:
 	RST	_PRINT_A
 	DJNZ	PFZROLP		; obsolete loop back to PFZROLP
-#else
-PF_ZRO_LP
+else
+PF_ZRO_LP:
 	LD	A,ZX_0		; prepare a '0' in the accumulator each time.
 	RST	_PRINT_A
 	DJNZ	PF_ZRO_LP	;+ New loop back to PF-ZRO-LP
-#endif
+endif
 
 	JR	PF_FRAC_LP		; forward
 
@@ -8765,9 +8758,9 @@ IX_END:
 ; Both the ZX80 and the ZX Spectrum have integer numbers in some form.
 
 
-TAB_CNST
+TAB_CNST:
 
-#if ORIGINAL
+if ORIGINAL
 mark_1915:
 				;	00 00 00 00 00
 stk_zero:
@@ -8800,7 +8793,7 @@ mark_1921:
 stk_ten:
 	DEFB	$34		;;Exponent: $84, Bytes: 1
 	DEFB	$20		;;(+00,+00,+00)
-#else
+else
 ;	This table has been modified so that the constants are held in their
 ;	uncompressed, ready-to-use, 5-byte form.
 
@@ -8833,7 +8826,7 @@ stk_ten:
 	DEFB	$00	;
 	DEFB	$00	;
 	DEFB	$00	;
-#endif
+endif
 
 
 ; THE 'TABLE OF ADDRESSES'
@@ -8842,10 +8835,10 @@ stk_ten:
 ; starts with binary operations which have two operands and one result.
 ; three pseudo binary operations first.
 
-#if ORIGINAL
+if ORIGINAL
 mark_1923:
-#else
-#endif
+else
+endif
 
 tbl_addrs:
 
@@ -9147,11 +9140,11 @@ STK_CONST:
 
 	EX	(SP),HL	; pointer to HL, destination to stack.
 
-#if ORIGINAL
+if ORIGINAL
 	PUSH	BC		; save BC - value 5 from test room ??.
-#else
+else
 ;;	PUSH	BC		; save BC - value 5 from test room. No need.
-#endif
+endif
 	LD	A,(HL)		; fetch the byte following 'stk_data'
 	AND	$C0		; isolate bits 7 and 6
 	RLCA			; rotate
@@ -9180,13 +9173,13 @@ FORM_EXP:
 	INC	DE		; increment destination
 
 
-#if ORIGINAL
+if ORIGINAL
 	LD	B,$00		; prepare to copy. Note. B is zero.
 	LDIR			; copy C bytes
 	POP	BC		; restore 5 counter to BC.
-#else
+else
 	LDIR			; copy C bytes
-#endif
+endif
 
 	EX	(SP),HL		; put HL on stack as next literal pointer
 				; and the stack value - result pointer -
@@ -9218,7 +9211,7 @@ STK_ZEROS:
 ; stacking intermediate, unwanted constants onto a dummy calculator stack,
 ; in the first five bytes of the ZX81 ROM.
 
-#if ORIGINAL
+if ORIGINAL
 mark_1A2D:
 SKIP_CONS:
 	AND	A		; test if initially zero.
@@ -9241,11 +9234,11 @@ SKIP_NEXT:
 	POP	AF		; restore count
 	DEC	A		; decrease
 	JR	SKIP_NEXT	; loop back
-#else
+else
 ; Since the table now uses uncompressed values, some extra ROM space is 
 ; required for the table but much more is released by getting rid of routines
 ; like this.
-#endif
+endif
 
 
 ; THE 'MEMORY LOCATION' SUBROUTINE
@@ -9278,15 +9271,15 @@ LOC_MEM:
 mark_1A45:
 get_mem_xx:
 
-#if ORIGINAL
+if ORIGINAL
 	PUSH	DE		; save STKEND
 	LD	HL,(MEM)	; MEM is base address of the memory cells.
-#else
+else
 				; Note. first two instructions have been swapped to create a subroutine.
 	LD	HL,(MEM)	; MEM is base address of the memory cells.
 INDEX_5				; new label
 	PUSH	DE		; save STKEND
-#endif
+endif
 	CALL	LOC_MEM		; so that HL = first byte
 	CALL	MOVE_FP		; moves 5 bytes with memory
 				; check.
@@ -9299,7 +9292,7 @@ INDEX_5				; new label
 
 
 stk_const_xx:
-#if ORIGINAL
+if ORIGINAL
 
 ; offset $A0: 'stk_zero'
 ; offset $A1: 'stk_one'
@@ -9329,12 +9322,12 @@ mark_1A51:
 	POP	HL		; restore pointer to next literal.
 	EXX			;
 	RET			; return.
-#else
+else
 stk_con_x
 	LD	HL,TAB_CNST	; Address: Table of constants.
 
 	JR	INDEX_5		; and join subroutine above.
-#endif
+endif
 
 
 
@@ -9359,15 +9352,15 @@ st_mem_xx:
 	CALL	LOC_MEM		; sets HL to the destination.
 	EX	DE,HL		; swap - HL is start, DE is destination.
 
-#if ORIGINAL
+if ORIGINAL
 	CALL	MOVE_FP
 				; note. a short ld bc,5; ldir
 				; the embedded memory check is not required
 				; so these instructions would be faster!
-#else
+else
 	LD	C,5		;+ one extra byte but 
 	LDIR			;+ faster and no memory check.
-#endif
+endif
 
 
 	EX	DE,HL		; DE = STKEND
@@ -9392,24 +9385,24 @@ exchange:
 mark_1A74:
 SWAP_BYTE:
 	LD	A,(DE)		; each byte of second
-#if ORIGINAL
+if ORIGINAL
 	LD	C,(HL)		; each byte of first
 	EX	DE,HL		; swap pointers
-#else
+else
 	LD	C,A		;+
 	LD	A,(HL)
-#endif
+endif
 	LD	(DE),A		; store each byte of first
 	LD	(HL),C		; store each byte of second
 	INC	HL		; advance both
 	INC	DE		; pointers.
 	DJNZ	SWAP_BYTE	; loop back until all 5 done.
 
-#if ORIGINAL
+if ORIGINAL
 	EX	DE,HL		; even up the exchanges so that DE addresses STKEND.
-#else
+else
 ;	omit
-#endif
+endif
 	RET			; return.
 
 
@@ -9496,7 +9489,6 @@ G_LOOP:
 
 ; Unary so on entry HL points to last value, DE to STKEND.
 
-mark_1AA0:
 mark_1AA0:
 neg:
 	LD A,	(HL)		; fetch exponent of last value on the
@@ -9816,14 +9808,14 @@ str_grtr:
 str_less:
 strs_eql:
 num_lt_eql:
-#if ORIGINAL
+if ORIGINAL
 mark_1B03:
 	LD	A,B		; transfer literal to accumulator.
 	SUB	$08		; subtract eight - which is not useful.
-#else
+else
 	LD	A,B		; transfer literal to accumulator.
 ;;	SUB	$08		; subtract eight - which is not useful.
-#endif
+endif
 	BIT	2,A		; isolate '>', '<', '='.
 
 	JR	NZ,EX_OR_NOT	; skip to EX_OR_NOT with these.
@@ -9831,9 +9823,9 @@ mark_1B03:
 	DEC	A		; else make $00-$02, $08-$0A to match bits 0-2.
 
 EX_OR_NOT:
-#if ORIGINAL
+if ORIGINAL
 mark_1B0B:
-#endif
+endif
 	RRCA			; the first RRCA sets carry for a swap.
 	JR	NC,NUM_OR_STR	; forward to NUM_OR_STR with other 8 cases
 
@@ -9855,7 +9847,7 @@ mark_1B0B:
 ; at the beginning we wouldn't have to alter which bit we test.
 
 NUM_OR_STR:
-#if ORIGINAL
+if ORIGINAL
 mark_1B16:
 
 	BIT	2,A		; test if a string comparison.
@@ -9865,14 +9857,14 @@ mark_1B16:
 
 	RRCA			; 2nd RRCA causes eql/neql to set carry.
 	PUSH	AF		; save A and carry
-#else
+else
 	RRCA			;+ causes 'eql/neql' to set carry.
 	PUSH	AF		;+ save the carry flag.
 
 	BIT	2,A		; test if a string comparison.
 	JR	NZ,STRINGS	; forward to STRINGS if so.
 
-#endif
+endif
 
 	CALL	SUBTRACT	; leaves result on stack.
 	JR	END_TESTS	; forward to END_TESTS
@@ -9881,14 +9873,14 @@ mark_1B16:
 
 
 STRINGS:
-#if ORIGINAL
+if ORIGINAL
 mark_1B21:
 	RRCA			; 2nd RRCA causes eql/neql to set carry.
 	PUSH	AF		; save A and carry.
-#else
+else
 ;;	RRCA			; 2nd RRCA causes eql/neql to set carry.
 ;;	PUSH	AF		; save A and carry.
-#endif
+endif
 	CALL	STK_FETCH	; gets 2nd string params
 	PUSH	DE		; save start2 *.
 	PUSH	BC		; and the length.
@@ -9902,9 +9894,9 @@ mark_1B21:
 ; the lengths decreased and the branch taken back to here. If both string
 ; remainders become null at the same time, then an exact match exists.
 
-#if ORIGINAL
+if ORIGINAL
 mark_1B2C:
-#endif
+endif
 BYTE_COMP:
 	LD	A,H		; test if the second string
 	OR	L		; is the null string and hold flags.
@@ -9916,9 +9908,9 @@ BYTE_COMP:
 
 	OR	C		; test length of first string.
 
-#if ORIGINAL
+if ORIGINAL
 mark_1B33:
-#endif
+endif
 
 SECOND_LOW:
 	POP	BC		; pop the second length off stack.
@@ -9938,9 +9930,9 @@ SECOND_LOW:
 ; ___
 ; the branch was here with a match
 
-#if ORIGINAL
+if ORIGINAL
 mark_1B3A:
-#endif
+endif
 
 BOTH_NULL:
 	POP	AF		; restore carry - set for eql/neql
@@ -10039,20 +10031,20 @@ strs_add:
 	POP	BC		; length of first
 	POP	HL		; address of start
 
-#if ORIGINAL
+if ORIGINAL
 	LD	A,B		; test for
 	OR	C		; zero length.
 	JR	Z,OTHER_STR	; to OTHER_STR if null string
 	LDIR			; copy string to workspace.
-#else
+else
 	CALL	COND_MV		;+ a conditional (NZ) ldir routine. 
-#endif
+endif
 
 mark_1B7D:
 OTHER_STR:
 	POP	BC		; now second length
 	POP	HL		; and start of string
-#if ORIGINAL
+if ORIGINAL
 	LD	A,B		; test this one
 	OR	C		; for zero length
 	JR	Z,STACK_POINTERS	; skip forward to STACK_POINTERS if so as complete.
@@ -10060,9 +10052,9 @@ OTHER_STR:
 	LDIR			; else copy the bytes.
 				; and continue into next routine which
 				; sets the calculator stack pointers.
-#else
+else
 	CALL	COND_MV		;+ a conditional (NZ) ldir routine. 
-#endif
+endif
 
 
 ; Check stack pointers
@@ -10100,24 +10092,24 @@ chr_dollar:
 
 	JR	C,REPORT_Bd	; forward if overflow
 	JR	NZ,REPORT_Bd	; forward if negative
-#if ORIGINAL
+if ORIGINAL
 	PUSH	AF		; save the argument.
-#endif
+endif
 	LD	BC,1		; one space required.
 	RST	_BC_SPACES	; BC_SPACES makes DE point to start
-#if ORIGINAL
+if ORIGINAL
 	POP	AF		; restore the number.
-#endif
+endif
 	LD	(DE),A		; and store in workspace
 
-#if ORIGINAL
+if ORIGINAL
 	CALL	STK_STO_STR	; stacks descriptor.
 
 	EX	DE,HL		; make HL point to result and DE to STKEND.
 	RET			; return.
-#else
+else
 	JR	str_STK	;+ relative jump to similar sequence in str$.
-#endif
+endif
 ; ___
 
 mark_1BA2:
@@ -10132,12 +10124,12 @@ REPORT_Bd:
 ;	e.g. VAL "2.3" = 2.3, VAL "2+4" = 6, VAL ("2" + "4") = 24.
 
 val:
-#if ORIGINAL
+if ORIGINAL
 mark_1BA4:
 	LD	HL,(CH_ADD)	; fetch value of system variable CH_ADD
-#else
+else
 	RST	_GET_CHAR	;+ shorter way to fetch CH_ADD.
-#endif
+endif
 	PUSH	HL		; and save on the machine stack.
 
 	CALL	STK_FETCH	; fetches the string operand
@@ -10231,10 +10223,10 @@ str_dollar:
 	POP	HL		; restore original
 	LD	(S_POSN),HL	; S_POSN values.
 
-#if ORIGINAL
-#else
+if ORIGINAL
+else
 str_STK:			; New entry-point to exploit similarities and save 3 bytes of code.
-#endif
+endif
 
 	CALL	STK_STO_STR	; stores the string
 				; descriptor on the calculator stack.
@@ -10327,18 +10319,18 @@ jump:
 JUMP_2:
 	LD	E,(HL)		; the jump byte 0-127 forward, 128-255 back.
 
-#if ORIGINAL
+if ORIGINAL
 mark_1C24:
 	XOR	A		; clear accumulator.
 	BIT	7,E		; test if negative jump
 	JR	Z,JUMP_3	; skip, if positive
 	CPL			; else change to $FF.
-#else
+else
 				; Note. Elegance from the ZX Spectrum.
 	LD	A,E		;+
 	RLA			;+
 	SBC	A,A		;+
-#endif
+endif
 
 mark_1C2B:
 JUMP_3:
@@ -10418,7 +10410,7 @@ int:
 	DEFB	__duplicate	;;		x, x.
 	DEFB	__less_0	;;		x, (1/0)
 	DEFB	__jump_true	;;		x, (1/0)
-	DEFB	int - $	;; X_NEG
+	DEFB	X_NEG - $	;; X_NEG
 
 	DEFB	__truncate	;;		trunc 3.4 = 3.
 	DEFB	__end_calc	;;		3.
@@ -10591,11 +10583,11 @@ REPORT_Ab:
 	DEFB	$09		; Error Report: Invalid argument
 
 VALID:
-#if ORIGINAL
+if ORIGINAL
 mark_1CB1:
 	DEFB	__stk_zero	;;		Note. not necessary.
 	DEFB	__delete	;;
-#endif
+endif
 	DEFB	__end_calc	;;
 	LD	A,(HL)		;
 
@@ -10677,8 +10669,8 @@ GRE_8:
 
 	RET			; return.
 
-#if ORIGINAL
-#else
+if ORIGINAL
+else
 ; ------------------------------
 ; THE NEW 'SQUARE ROOT' FUNCTION
 ; ------------------------------
@@ -10769,7 +10761,7 @@ SLOOP	DEFB	__duplicate	;;		x,x.
 ;	80	PRINT I; " VALUE "; G
 ;	90 NEXT I
 ;	100 PRINT "NAPIER METHOD"; SQR N
-#endif
+endif
 
 
 ; THE 'TRIGONOMETRIC' FUNCTIONS
@@ -11222,7 +11214,7 @@ acs:
 
 	RET			; return.
 
-#if ORIGINAL
+if ORIGINAL
 
 ; THE 'SQUARE ROOT' FUNCTION
 
@@ -11254,7 +11246,7 @@ sqr:
 	DEFB	__stk_half	;;	x, .5.
 	DEFB	__end_calc	;;	x, .5.
 
-#endif
+endif
 
 
 ; THE 'EXPONENTIATION' OPERATION
@@ -11309,19 +11301,19 @@ XISO:
 ;	There are some one and two-byte alternatives but perhaps the most formal
 ;	might have been to use end_calc; rst 08; defb 05.
 
-;	#if ORIGINAL
+;	if ORIGINAL
 
 ; the SG ROM seems to want it the old way!
-#if 1
+if 1
 	DEFB	__stk_one	;;	0, 1.
 	DEFB	__exchange	;;	1, 0.
 	DEFB	__division	;;	1/0	>> error 
-#else
+else
 	DEFB	$34		;+ end-calc
 REPORT_6c
 	RST	08H		;+ ERROR-1
 	DEFB	$05		;+ Error Report: Number too big
-#endif
+endif
 
 
 ; ___
@@ -11342,16 +11334,16 @@ LAST:
 
 SPARE:
 
-#if ORIGINAL
+if ORIGINAL
 mark_1DFF:
 	DEFB	$FF		; That's all folks.
-#else
+else
 mark_1DFE:
 L1DFE:
 
 ;;	DEFB	$FF, $FF	; Two spare bytes.
 	DEFB	$00, $00	; Two spare bytes (as per the Shoulders of Giants ROM)
-#endif
+endif
 
 
 
@@ -11359,7 +11351,7 @@ L1DFE:
 
 
 mark_1E00:
-char_set	; - begins with space character.
+char_set:	; - begins with space character.
 
 ; $00 - Character: ' '		CHR$(0)
 
@@ -12066,7 +12058,3 @@ char_set	; - begins with space character.
 	DEFB	%00000000
 
 
-;
-; This marks the end of the ZX81 ROM.
-
-#end
