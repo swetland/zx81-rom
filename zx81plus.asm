@@ -6629,7 +6629,7 @@ L_ENTER:
 	EX	DE,HL		;
 if ORIGINAL
 else
-COND_MV
+COND_MV:
 endif
 	LD	A,B		;
 	OR	C		;
@@ -9277,7 +9277,7 @@ if ORIGINAL
 else
 				; Note. first two instructions have been swapped to create a subroutine.
 	LD	HL,(MEM)	; MEM is base address of the memory cells.
-INDEX_5				; new label
+INDEX_5:			; new label
 	PUSH	DE		; save STKEND
 endif
 	CALL	LOC_MEM		; so that HL = first byte
@@ -9323,7 +9323,7 @@ mark_1A51:
 	EXX			;
 	RET			; return.
 else
-stk_con_x
+stk_con_x:
 	LD	HL,TAB_CNST	; Address: Table of constants.
 
 	JR	INDEX_5		; and join subroutine above.
@@ -10687,7 +10687,7 @@ else
 ;	First test for zero and return zero, if so, as the result.
 ;	If the argument is negative, then produce an error.
 ;
-sqr	RST	_FP_CALC	;; 		x
+sqr:	RST	_FP_CALC	;; 		x
 	DEFB	__st_mem_3	;;		x.	(seed for guess)
 	DEFB	__end_calc	;;		x.
 
@@ -10718,14 +10718,14 @@ sqr	RST	_FP_CALC	;; 		x
 	JR	Z,ASIS		; forward with say .25 -> .5
 	JP	P,ASIS		; leave increment if value > .5
 	DEC	A		; restore to shift only.
-ASIS	XOR	$80		; restore sign.
+ASIS:	XOR	$80		; restore sign.
 	LD	(HL),A	; and put back 'halved' exponent.
 
 ;	Now re-enter the calculator.
 
 	RST	28H		;; FP-CALC		x
 
-SLOOP	DEFB	__duplicate	;;		x,x.
+SLOOP:	DEFB	__duplicate	;;		x,x.
 	DEFB	__get_mem_3	;;		x,x,guess
 	DEFB	__st_mem_4	;;		x,x,guess
 	DEFB	__division	;;		x,x/guess.
