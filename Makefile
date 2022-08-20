@@ -1,19 +1,18 @@
 
-all: check
+all: golden.zx81.hex zx81plus.rom zx81plus.chk zx81v2.rom zx81v2.chk
 
-check:: zx81plus.hex golden.zx81.hex
-	@diff zx81plus.hex golden.zx81.hex
-	@echo SUCCESS - identical to original rom
+V := @
 
-zx81plus.rom: zx81plus.asm
-	z80asm --list=zx81plus.lst --label=zx81plus.xref --output=zx81plus.rom -v zx81plus.asm
+%.chk: %.hex
+	$(V)diff $< golden.zx81.hex
+	$(V)echo SUCCESS - $< is identical to original rom
+	$(V)touch $@
 
-zx81plus.hex: zx81plus.rom
-	xxd -g1 zx81plus.rom > zx81plus.hex
+%.rom: %.asm
+	$(V)z80asm --list=$@.lst --label=$@.xref --output=$@ $<
 
-golden.zx81.hex: golden.zx81.rom
-	xxd -g1 golden.zx81.rom > golden.zx81.hex
+%.hex: %.rom
+	$(V)xxd -g1 $< > $@
 
 clean:
-	rm -f zx81plus.rom zx81plus.hex zx81plus.lst zx81plus.xref
-	rm -f golden.zx81.hex
+	$(V)rm -f *.hex *.lst *.xref *.chk zx81plus.rom zx81v2.rom
